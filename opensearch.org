@@ -13,7 +13,7 @@ https://opensearch.org/docs/latest/install-and-configure/install-opensearch/dock
 
 Información del equipo:
 
-#+begin_src sh :results output 
+#+begin_src sh :results output  :exports both
 lscpu
 #+end_src
 
@@ -49,7 +49,7 @@ Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cm
 
 Información del equipo:
 
-#+begin_src sh :results output
+#+begin_src sh :results output :exports both
 lsb_release  -a 
 #+end_src
 
@@ -148,7 +148,7 @@ curl https://localhost:9200 -ku 'admin:admin'
 
 En este paso utilizaremos el archivo de ejemplo  *docker-compose.yml*: 
 
-#+begin_quote
+#+begin_src
 version: '3'
 services:
   opensearch-node1: # This is also the hostname of the container within the Docker network (i.e. https://opensearch-node1/)

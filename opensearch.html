@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2023-06-16 vie 15:14 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>opensearch</title>
+<meta name="author" content="dapm" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+</style>
+<link rel="stylesheet" type="text/css" href="org.css"/>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">opensearch</h1>
+<p>
+Página de referencia (instrucciones):<br />
+</p>
+
+<p>
+<a href="https://opensearch.org/docs/latest/install-and-configure/install-opensearch/docker/">https://opensearch.org/docs/latest/install-and-configure/install-opensearch/docker/</a><br />
+</p>
+
+<div id="outline-container-org0fab061" class="outline-2">
+<h2 id="org0fab061"><span class="section-number-2">1.</span> Install docker</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Información del equipo:<br />
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">lscpu
+</pre>
+</div>
+
+
+<p>
+Información del equipo:<br />
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">lsb_release  -a 
+</pre>
+</div>
+
+
+<p>
+Instalar docker:<br />
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">sudo apt update
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-sh">sudo apt install docker.io docker-compose
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org00b1ae5" class="outline-2">
+<h2 id="org00b1ae5"><span class="section-number-2">2.</span> Disable memory paging and swapping performance on the host to improve performance.</h2>
+<div class="outline-text-2" id="text-2">
+<div class="org-src-container">
+<pre class="src src-:eval">sudo swapoff -a
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgefce943" class="outline-2">
+<h2 id="orgefce943"><span class="section-number-2">3.</span> Increase the number of memory maps available to OpenSearch.</h2>
+<div class="outline-text-2" id="text-3">
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #abb2bf; background-color: #282c34;"># </span><span style="color: #999999; font-style: italic;">Edit the sysctl config file</span>
+sudo vi /etc/sysctl.conf
+
+<span style="color: #abb2bf; background-color: #282c34;"># </span><span style="color: #999999; font-style: italic;">Add a line to define the desired value</span>
+<span style="color: #abb2bf; background-color: #282c34;"># </span><span style="color: #999999; font-style: italic;">or change the value if the key exists,</span>
+<span style="color: #abb2bf; background-color: #282c34;"># </span><span style="color: #999999; font-style: italic;">and then save your changes.</span>
+vm.max_map_count=262144
+
+<span style="color: #abb2bf; background-color: #282c34;"># </span><span style="color: #999999; font-style: italic;">Reload the kernel parameters using sysctl</span>
+sudo sysctl -p
+
+<span style="color: #abb2bf; background-color: #282c34;"># </span><span style="color: #999999; font-style: italic;">Verify that the change was applied by checking the value</span>
+cat /proc/sys/vm/max_map_count
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga208ea3" class="outline-2">
+<h2 id="orga208ea3"><span class="section-number-2">4.</span> Run OpenSearch in a Docker container</h2>
+<div class="outline-text-2" id="text-4">
+<ul class="org-ul">
+<li>Descargar (pull)  las  imágenes<br /></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">docker pull opensearchproject/opensearch:latest
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-sh">docker pull opensearchproject/opensearch-dashboards:latest
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Correr openSearch en un (single-node) container:<br /></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh"><span style="color: #abb2bf; background-color: #282c34;"># </span><span style="color: #999999; font-style: italic;">This command maps ports 9200 and 9600, sets the discovery type to "single-node" and requests the newest image of OpenSearch</span>
+docker run -d -p 9200:9200 -p 9600:9600 -e <span style="color: #98be65;">"discovery.type=single-node"</span> opensearchproject/opensearch:latest
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Enviar un request al puerto 9200 para  verificar que el container está corriendo:<br /></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">curl https://localhost:9200 -ku <span style="color: #98be65;">'admin:admin'</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Respuesta<br /></li>
+</ul>
+
+<pre class="example" id="org94b28c5">
+{
+  "name" : "0e7b776914ed",
+  "cluster_name" : "docker-cluster",
+  "cluster_uuid" : "_wRSEJGcQD21_3nmXNJ10g",
+  "version" : {
+    "distribution" : "opensearch",
+    "number" : "2.8.0",
+    "build_type" : "tar",
+    "build_hash" : "db90a415ff2fd428b4f7b3f800a51dc229287cb4",
+    "build_date" : "2023-06-03T06:24:25.112415503Z",
+    "build_snapshot" : false,
+    "lucene_version" : "9.6.0",
+    "minimum_wire_compatibility_version" : "7.10.0",
+    "minimum_index_compatibility_version" : "7.0.0"
+  },
+  "tagline" : "The OpenSearch Project: https://opensearch.org/"
+}
+</pre>
+</div>
+</div>
+
+
+<div id="outline-container-org3547f6b" class="outline-2">
+<h2 id="org3547f6b"><span class="section-number-2">5.</span> Deploy an OpenSearch cluster using Docker Compose</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+En este paso utilizaremos el archivo de ejemplo  <b>docker-compose.yml</b>:<br />
+</p>
+
+<blockquote>
+<p>
+version: '3'<br />
+services:<br />
+  opensearch-node1: # This is also the hostname of the container within the Docker network (i.e. <a href="https://opensearch-node1/">https://opensearch-node1/</a>)<br />
+    image: opensearchproject/opensearch:latest # Specifying the latest available image - modify if you want a specific version<br />
+    container<sub>name</sub>: opensearch-node1<br />
+    environment:<br />
+</p>
+<ul class="org-ul">
+<li>cluster.name=opensearch-cluster # Name the cluster<br /></li>
+<li>node.name=opensearch-node1 # Name the node that will run in this container<br /></li>
+<li>discovery.seed<sub>hosts</sub>=opensearch-node1,opensearch-node2 # Nodes to look for when discovering the cluster<br /></li>
+<li>cluster.initial<sub>cluster</sub><sub>manager</sub><sub>nodes</sub>=opensearch-node1,opensearch-node2 # Nodes eligible to serve as cluster manager<br /></li>
+<li>bootstrap.memory<sub>lock</sub>=true # Disable JVM heap memory swapping<br /></li>
+<li>"OPENSEARCH<sub>JAVA</sub><sub>OPTS</sub>=-Xms512m -Xmx512m" # Set min and max JVM heap sizes to at least 50% of system RAM<br /></li>
+</ul>
+<p>
+ulimits:<br />
+  memlock:<br />
+    soft: -1 # Set memlock to unlimited (no soft or hard limit)<br />
+    hard: -1<br />
+  nofile:<br />
+    soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536<br />
+    hard: 65536<br />
+volumes:<br />
+</p>
+<ul class="org-ul">
+<li>opensearch-data1:/usr/share/opensearch/data # Creates volume called opensearch-data1 and mounts it to the container<br /></li>
+</ul>
+<p>
+ports:<br />
+</p>
+<ul class="org-ul">
+<li>9200:9200 # REST API<br /></li>
+<li>9600:9600 # Performance Analyzer<br /></li>
+</ul>
+<p>
+networks:<br />
+</p>
+<ul class="org-ul">
+<li>opensearch-net # All of the containers will join the same Docker bridge network<br /></li>
+</ul>
+<p>
+opensearch-node2:<br />
+  image: opensearchproject/opensearch:latest # This should be the same image used for opensearch-node1 to avoid issues<br />
+  container<sub>name</sub>: opensearch-node2<br />
+  environment:<br />
+</p>
+<ul class="org-ul">
+<li>cluster.name=opensearch-cluster<br /></li>
+<li>node.name=opensearch-node2<br /></li>
+<li>discovery.seed<sub>hosts</sub>=opensearch-node1,opensearch-node2<br /></li>
+<li>cluster.initial<sub>cluster</sub><sub>manager</sub><sub>nodes</sub>=opensearch-node1,opensearch-node2<br /></li>
+<li>bootstrap.memory<sub>lock</sub>=true<br /></li>
+<li>"OPENSEARCH<sub>JAVA</sub><sub>OPTS</sub>=-Xms512m -Xmx512m"<br /></li>
+</ul>
+<p>
+ulimits:<br />
+  memlock:<br />
+    soft: -1<br />
+    hard: -1<br />
+  nofile:<br />
+    soft: 65536<br />
+    hard: 65536<br />
+volumes:<br />
+</p>
+<ul class="org-ul">
+<li>opensearch-data2:/usr/share/opensearch/data<br /></li>
+</ul>
+<p>
+networks:<br />
+</p>
+<ul class="org-ul">
+<li>opensearch-net<br /></li>
+</ul>
+<p>
+opensearch-dashboards:<br />
+  image: opensearchproject/opensearch-dashboards:latest # Make sure the version of opensearch-dashboards matches the version of opensearch installed on other nodes<br />
+  container<sub>name</sub>: opensearch-dashboards<br />
+  ports:<br />
+</p>
+<ul class="org-ul">
+<li>5601:5601 # Map host port 5601 to container port 5601<br /></li>
+</ul>
+<p>
+expose:<br />
+</p>
+<ul class="org-ul">
+<li>"5601" # Expose port 5601 for web access to OpenSearch Dashboards<br /></li>
+</ul>
+<p>
+environment:<br />
+  OPENSEARCH<sub>HOSTS</sub>: '["<a href="https://opensearch-node1:9200","https//opensearch-node2:9200">https://opensearch-node1:9200","https//opensearch-node2:9200</a>"]' # Define the OpenSearch nodes that OpenSearch Dashboards will query<br />
+networks:<br />
+</p>
+<ul class="org-ul">
+<li>opensearch-net<br /></li>
+</ul>
+
+<p>
+volumes:<br />
+  opensearch-data1:<br />
+  opensearch-data2:<br />
+</p>
+
+<p>
+networks:<br />
+  opensearch-net:<br />
+</p>
+</blockquote>
+
+<ul class="org-ul">
+<li>creando el container (detached mode):<br /></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">docker-compose up -d 
+</pre>
+</div>
+
+
+<div id="org3940b90" class="figure">
+<p><img src="docker-compose-up-d.png" alt="docker-compose-up-d.png" /><br />
+</p>
+</div>
+
+<ul class="org-ul">
+<li>verificando que el container esta funcionando:<br /></li>
+</ul>
+
+
+<div id="orgb9d8088" class="figure">
+<p><img src="docker-compose-ps.png" alt="docker-compose-ps.png" /><br />
+</p>
+</div>
+
+
+<ul class="org-ul">
+<li>Accediendo a <code>https://localhost:5601</code> (username: admin, password: admin)<br /></li>
+</ul>
+
+
+<div id="org2768219" class="figure">
+<p><img src="opensearch-loging.png" alt="opensearch-loging.png" /><br />
+</p>
+</div>
+
+
+<ul class="org-ul">
+<li>opensearch dashboards pantalla de bienvenida:<br /></li>
+</ul>
+
+
+<div id="org8ed186a" class="figure">
+<p><img src="opensearch-dashboards-welcome.png" alt="opensearch-dashboards-welcome.png" /><br />
+</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

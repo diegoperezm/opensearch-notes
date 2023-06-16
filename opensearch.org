@@ -1,0 +1,240 @@
+#+title:  opensearch  
+#+OPTIONS: toc:nil   
+#+OPTIONS: html-postamble:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="org.css"/>
+#+OPTIONS: \n:t
+
+
+Página de referencia (instrucciones):
+
+https://opensearch.org/docs/latest/install-and-configure/install-opensearch/docker/
+
+* Install docker 
+
+Información del equipo:
+
+#+begin_src sh :results output 
+lscpu
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Architecture:        x86_64
+CPU op-mode(s):      32-bit, 64-bit
+Byte Order:          Little Endian
+CPU(s):              4
+On-line CPU(s) list: 0-3
+Thread(s) per core:  2
+Core(s) per socket:  2
+Socket(s):           1
+NUMA node(s):        1
+Vendor ID:           GenuineIntel
+CPU family:          6
+Model:               42
+Model name:          Intel(R) Core(TM) i3-2348M CPU @ 2.30GHz
+Stepping:            7
+CPU MHz:             842.639
+CPU max MHz:         2300,0000
+CPU min MHz:         800,0000
+BogoMIPS:            4589.85
+Virtualization:      VT-x
+L1d cache:           32K
+L1i cache:           32K
+L2 cache:            256K
+L3 cache:            3072K
+NUMA node0 CPU(s):   0-3
+Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ht tm pbe syscall nx rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic popcnt tsc_deadline_timer xsave avx lahf_lm epb pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid xsaveopt dtherm arat pln pts md_clear flush_l1d
+#+end_example
+
+
+Información del equipo:
+
+#+begin_src sh :results output
+lsb_release  -a 
+#+end_src
+
+#+RESULTS:
+: Distributor ID:	Ubuntu
+: Description:	Ubuntu 18.04.5 LTS
+: Release:	18.04
+: Codename:	bionic
+
+
+Instalar docker: 
+
+#+begin_src sh :eval no
+sudo apt update
+#+end_src
+
+#+begin_src sh :eval no
+sudo apt install docker.io docker-compose
+#+end_src
+
+* Disable memory paging and swapping performance on the host to improve performance.
+
+#+begin_src  :eval no
+sudo swapoff -a
+#+end_src
+
+* Increase the number of memory maps available to OpenSearch.
+
+#+begin_src sh :eval no
+# Edit the sysctl config file
+sudo vi /etc/sysctl.conf
+
+# Add a line to define the desired value
+# or change the value if the key exists,
+# and then save your changes.
+vm.max_map_count=262144
+
+# Reload the kernel parameters using sysctl
+sudo sysctl -p
+
+# Verify that the change was applied by checking the value
+cat /proc/sys/vm/max_map_count
+#+end_src
+
+* Run OpenSearch in a Docker container
+
+ - Descargar (pull)  las  imágenes
+
+#+begin_src sh :eval no
+docker pull opensearchproject/opensearch:latest
+#+end_src
+
+#+begin_src sh :eval no
+docker pull opensearchproject/opensearch-dashboards:latest
+#+end_src
+
+ - Correr openSearch en un (single-node) container:
+ 
+#+begin_src sh :eval no
+ # This command maps ports 9200 and 9600, sets the discovery type to "single-node" and requests the newest image of OpenSearch
+ docker run -d -p 9200:9200 -p 9600:9600 -e "discovery.type=single-node" opensearchproject/opensearch:latest
+#+end_src
+
+ - Enviar un request al puerto 9200 para  verificar que el container está corriendo: 
+
+#+begin_src sh  :results output
+curl https://localhost:9200 -ku 'admin:admin'
+#+end_src
+
+ - Respuesta 
+
+#+RESULTS:
+#+begin_example
+{
+  "name" : "0e7b776914ed",
+  "cluster_name" : "docker-cluster",
+  "cluster_uuid" : "_wRSEJGcQD21_3nmXNJ10g",
+  "version" : {
+    "distribution" : "opensearch",
+    "number" : "2.8.0",
+    "build_type" : "tar",
+    "build_hash" : "db90a415ff2fd428b4f7b3f800a51dc229287cb4",
+    "build_date" : "2023-06-03T06:24:25.112415503Z",
+    "build_snapshot" : false,
+    "lucene_version" : "9.6.0",
+    "minimum_wire_compatibility_version" : "7.10.0",
+    "minimum_index_compatibility_version" : "7.0.0"
+  },
+  "tagline" : "The OpenSearch Project: https://opensearch.org/"
+}
+#+end_example
+
+
+* Deploy an OpenSearch cluster using Docker Compose
+
+
+En este paso utilizaremos el archivo de ejemplo  *docker-compose.yml*: 
+
+#+begin_quote
+version: '3'
+services:
+  opensearch-node1: # This is also the hostname of the container within the Docker network (i.e. https://opensearch-node1/)
+    image: opensearchproject/opensearch:latest # Specifying the latest available image - modify if you want a specific version
+    container_name: opensearch-node1
+    environment:
+      - cluster.name=opensearch-cluster # Name the cluster
+      - node.name=opensearch-node1 # Name the node that will run in this container
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2 # Nodes to look for when discovering the cluster
+      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2 # Nodes eligible to serve as cluster manager
+      - bootstrap.memory_lock=true # Disable JVM heap memory swapping
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # Set min and max JVM heap sizes to at least 50% of system RAM
+    ulimits:
+      memlock:
+        soft: -1 # Set memlock to unlimited (no soft or hard limit)
+        hard: -1
+      nofile:
+        soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
+        hard: 65536
+    volumes:
+      - opensearch-data1:/usr/share/opensearch/data # Creates volume called opensearch-data1 and mounts it to the container
+    ports:
+      - 9200:9200 # REST API
+      - 9600:9600 # Performance Analyzer
+    networks:
+      - opensearch-net # All of the containers will join the same Docker bridge network
+  opensearch-node2:
+    image: opensearchproject/opensearch:latest # This should be the same image used for opensearch-node1 to avoid issues
+    container_name: opensearch-node2
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node2
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2
+      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data2:/usr/share/opensearch/data
+    networks:
+      - opensearch-net
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:latest # Make sure the version of opensearch-dashboards matches the version of opensearch installed on other nodes
+    container_name: opensearch-dashboards
+    ports:
+      - 5601:5601 # Map host port 5601 to container port 5601
+    expose:
+      - "5601" # Expose port 5601 for web access to OpenSearch Dashboards
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]' # Define the OpenSearch nodes that OpenSearch Dashboards will query
+    networks:
+      - opensearch-net
+
+volumes:
+  opensearch-data1:
+  opensearch-data2:
+
+networks:
+  opensearch-net:
+#+end_quote
+
+ - creando el container (detached mode):
+
+#+begin_src sh :eval no 
+docker-compose up -d 
+#+end_src
+
+[[file:docker-compose-up-d.png]]
+
+ - verificando que el container esta funcionando:
+
+[[file:docker-compose-ps.png]]
+
+
+ - Accediendo a ~https://localhost:5601~ (username: admin, password: admin)
+
+[[file:opensearch-loging.png]]
+
+
+ - opensearch dashboards pantalla de bienvenida:
+
+[[file:opensearch-dashboards-welcome.png]]
+

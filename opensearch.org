@@ -310,12 +310,7 @@ Por el momento  elegiré "Sample eCommerce orders"
 [[file:sample-ecommerce-order-selection.png]]
 
 Click "View data"
-
-
-#+begin_src sh
-sleep 5 && scrot -u 
-#+end_src
-
+[[file:ecommerce-order-data.png]]
 
 * Docker misc
 Página de referencia (docker):

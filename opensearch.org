@@ -305,6 +305,18 @@ Después de elegir, tengo acceso a ésta página:
 [[file:add-sample-data-page.png]]
 
 
+Por el momento  elegiré "Sample eCommerce orders" 
+
+[[file:sample-ecommerce-order-selection.png]]
+
+Click "View data"
+
+
+#+begin_src sh
+sleep 5 && scrot -u 
+#+end_src
+
+
 * Docker misc
 Página de referencia (docker):
 

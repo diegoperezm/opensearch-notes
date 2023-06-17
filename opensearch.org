@@ -142,7 +142,6 @@ curl https://localhost:9200 -ku 'admin:admin'
 }
 #+end_example
 
-
 * Deploy an OpenSearch cluster using Docker Compose
 
 
@@ -237,4 +236,97 @@ docker-compose up -d
  - opensearch dashboards pantalla de bienvenida:
 
 [[file:opensearch-dashboards-welcome.png]]
+
+
+
+
+* OpenSearch Dashboards
+
+Página de referencia (instrucciones):
+
+https://opensearch.org/docs/latest/dashboards/quickstart/
+
+ - Add sample data
+ - Explore and inspect data
+ - Visualize data
+
+** Adding sample data
+
+  - access OpenSearch Dashboard:  ~https://localhost:5601~ (admin:admin)
+    
+ - Add data 
+El botón "Add data" despliega el siguiente popup
+
+[[file:select-your-tenant.png]]
+
+Página de referencia:
+
+https://opensearch.org/docs/latest/security/multi-tenancy/tenant-index/
+
+#+begin_quote
+enants in OpenSearch Dashboards are spaces for:
+ - saving index patterns
+ - visualizations
+ - dashboards
+ -  and other OpenSearch Dashboards objects.
+
+ OpenSearch allows users to create multiple tenants for multiple uses. Tenants *are useful for safely sharing your work with other OpenSearch Dashboards users*. 
+You can control which roles have access to a tenant and whether those roles have read or write access. By default, all OpenSearch Dashboards users have access to two independent tenants: the global tenant and a private tenant. Multi-tenancy also provides the option to create custom tenants.
+
+ - Global tenant:
+  Is shared between every OpenSearch Dashboards user. It does allow for sharing objects among users who have access to it.
+ - Private: 
+   This tenant is exclusive to each user and can’t be shared. It does not allow you to access routes or index patterns created by the user’s global tenant.
+ - Custom: 
+   Administrators can create custom tenants and assign them to specific roles. Once created, these tenants can then provide spaces for specific groups of users.
+
+
+#+end_quote
+
+
+#+begin_quote
+The global tenant is not a primary tenant in the sense that it replicates its content in a private tenant. To the contrary, if you make a change to your global tenant, you won’t see that change reflected in your private tenant. Some example changes include the following:
+
+  -  Change advanced settings
+  -  Create visualizations
+  -  Create index patterns
+
+To provide a practical example, you might use the private tenant for exploratory work, create detailed visualizations with your team in an analysts tenant, and maintain a summary dashboard for corporate leadership in an executive tenant.
+
+If you share a visualization or dashboard with someone, you can see that the URL includes the tenant:
+
+http://<opensearch_dashboards_host>:5601/app/opensearch-dashboards?security_tenant=analysts#/visualize/edit/c501fa50-7e52-11e9-ae4e-b5d69947d32e?_g=()
+#+end_quote
+
+Por el momento elegiré Private: The private tenant is exclusive to each user and can't be shared. You might use the private tenant for exploratory work. 
+
+Después de elegir, tengo acceso a ésta página:
+
+[[file:add-sample-data-page.png]]
+
+
+* Docker misc
+Página de referencia (docker):
+
+https://docs.docker.com/engine/reference/commandline/compose_up/
+
+#+begin_quote
+--no-recreate:
+ If containers already exist, don’t recreate them. Incompatible with --force-recreate. 
+#+end_quote
+
+
+https://docs.docker.com/engine/reference/commandline/compose_restart/
+#+begin_quote
+Restarts all stopped and running services, or the specified services only.
+
+If you make changes to your compose.yml configuration, these changes are not reflected after running this command. For example, changes to environment variables (which are added after a container is built, but before the container’s command is executed) are not updated after restarting.
+
+If you are looking to configure a service’s restart policy, please refer to restart or restart_policy.
+#+end_quote
+
+#+begin_src sh  :eval no
+docker-compose up --no-recreate
+#+end_src
+
 

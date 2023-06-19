@@ -9,6 +9,15 @@ Página de referencia (instrucciones):
 
 https://opensearch.org/docs/latest/install-and-configure/install-opensearch/docker/
 
+
+https://playground.opensearch.org/app/home#/
+
+#+begin_quote
+Explore features in OpenSearch Dashboards without downloading or installing anything. 
+#+end_quote
+
+
+
 * Install docker 
 
 Información del equipo:
@@ -69,6 +78,45 @@ sudo apt update
 #+begin_src sh :eval no
 sudo apt install docker.io docker-compose
 #+end_src
+
+docker version:
+
+#+begin_src sh :exports both :results output 
+docker version 
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Client:
+ Version:           20.10.21
+ API version:       1.41
+ Go version:        go1.18.1
+ Git commit:        20.10.21-0ubuntu1~18.04.3
+ Built:             Thu Apr 27 05:50:21 2023
+ OS/Arch:           linux/amd64
+ Context:           default
+ Experimental:      true
+
+Server:
+ Engine:
+  Version:          20.10.21
+  API version:      1.41 (minimum version 1.12)
+  Go version:       go1.18.1
+  Git commit:       20.10.21-0ubuntu1~18.04.3
+  Built:            Thu Apr 27 05:36:22 2023
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          1.6.12-0ubuntu1~18.04.1
+  GitCommit:        
+ runc:
+  Version:          1.1.4-0ubuntu1~18.04.2
+  GitCommit:        
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        
+#+end_example
+
 
 * Disable memory paging and swapping performance on the host to improve performance.
 
@@ -264,7 +312,7 @@ Página de referencia:
 https://opensearch.org/docs/latest/security/multi-tenancy/tenant-index/
 
 #+begin_quote
-enants in OpenSearch Dashboards are spaces for:
+Tenants in OpenSearch Dashboards are spaces for:
  - saving index patterns
  - visualizations
  - dashboards
@@ -311,6 +359,24 @@ Por el momento  elegiré "Sample eCommerce orders"
 
 Click "View data"
 [[file:ecommerce-order-data.png]]
+
+
+Página de referencia:
+https://opensearch.org/docs/2.8/dashboards/discover/dql/
+
+DQL:
+#+begin_quote
+Before you can search data in Dashboards, you must index it. In OpenSearch, the basic unit of data is a JSON document. Within an index, OpenSearch identifies each document using a unique ID. To learn more about indexing in OpenSearch, see Index data.
+#+end_quote
+
+
+
+Página de referencia:
+
+https://opensearch.org/docs/latest/dashboards/discover/index-discover/
+
+
+
 
 * Docker misc
 Página de referencia (docker):

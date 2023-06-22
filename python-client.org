@@ -1,0 +1,315 @@
+#+title:  Python Client 
+#+OPTIONS: toc:nil   
+#+OPTIONS: html-postamble:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="org.css"/>
+#+OPTIONS: \n:t
+
+Página de referencia:
+
+https://opensearch.org/docs/latest/clients/python-low-level/
+
+#+begin_quote
+The OpenSearch low-level Python client (opensearch-py) provides wrapper methods for the OpenSearch REST API so that you can interact with your cluster more naturally in Python. Rather than sending raw HTTP requests to a given URL, you can create an OpenSearch client for your cluster and call the client’s built-in functions. 
+#+end_quote
+
+API docs
+
+https://opensearch-project.github.io/opensearch-py/
+
+* Setup
+
+** Install python3-pip
+
+#+begin_src  :eval no
+sudo apt install -y python3-venv
+#+end_src
+
+** Create venv and activate
+
+#+begin_src  :eval no
+python3 -m venv opse_env
+#+end_src
+
+#+begin_src  :eval no
+source opse_env/bin/activate 
+#+end_src
+
+** install   opensearch 
+
+#+begin_src sh :eval no 
+pip install opensearch-py
+#+end_src
+
+
+* Connecting to OpenSearch
+
+** Generating self-signed certificates (Pendiente)
+
+
+Por el momento estoy usando  el certificado de  opensearch-node1 /usr/share/opensearch/config/root-cat.pem
+
+https://opensearch.org/docs/latest/security/configuration/generate-certificates
+
+ - install openssl
+
+#+begin_src 
+sudo  apt install openssl 
+#+end_src
+
+ - Generate a private key
+
+The first step in this process is to generate a private key using the openssl genrsa command. As the name suggests, you should keep this file private.
+
+Private keys must be of sufficient length to be secure, so specify 2048:
+
+#+begin_src 
+openssl genrsa -out root-ca-key.pem 2048
+#+end_src
+
+You can optionally add the -aes256 option to encrypt the key using the AES-256 standard. This option requires a password.
+
+
+ - Generate a root certificate
+
+Next, use the private key to generate a self-signed certificate for the root CA:
+
+#+begin_src 
+openssl req -new -x509 -sha256 -key root-ca-key.pem -out root-ca.pem -days 730
+#+end_src
+
+The default -days value of 30 is only useful for testing purposes. This sample command specifies 730 (two years) for the certificate expiration date, but use whatever value makes sense for your organization.
+
+
+The -x509 option specifies that you want a self-signed certificate rather than a certificate request.
+The -sha256 option sets the hash algorithm to SHA-256. SHA-256 is the default in later versions of OpenSSL, but earlier versions might use SHA-1.
+Follow the prompts to specify details for your organization. Together, these details form the distinguished name (DN) of your CA.
+
+** configuring TLS certificates (Pendiente)
+
+Por el momento estoy usando  el certificado de  opensearch-node1 /usr/share/opensearch/config/root-cat.pem
+
+https://opensearch.org/docs/latest/security/configuration/generate-certificates/
+
+https://opensearch.org/docs/latest/security/authentication-backends/client-auth/
+
+Sin el anterior certificado obtengo el siguiente error:
+
+#+begin_src  
+opensearchpy.exceptions.SSLError: ConnectionError([SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:852)) caused by: SSLError([SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:852))
+#+end_src
+
+
+** connecting to OpenSearch
+
+#+begin_quote
+To connect to the default OpenSearch host, create a client object with SSL enabled if you are using the Security plugin. You can use the default credentials for testing purposes:
+#+end_quote
+
+Script: connect-to-opensearch.org
+
+#+begin_src python :eval no
+from opensearchpy import OpenSearch
+
+host = 'localhost'
+port = 9200
+# For testing only. Don't store credentials in code.
+auth = ('admin', 'admin') 
+# Provide a CA bundle if you use intermediate CAs with your root CA.
+ca_certs_path = '/full/path/to/root-ca.pem' 
+
+# Create the client with SSL/TLS enabled, but hostname verification disabled.
+client = OpenSearch(
+    hosts = [{'host': host, 'port': port}],
+# enables gzip compression for request bodies
+    http_compress = True, 
+    http_auth = auth,
+    use_ssl = True,
+    verify_certs = True,
+    ssl_assert_hostname = False,
+    ssl_show_warn = False,
+    ca_certs = ca_certs_path
+)
+
+q = 'miller'
+query = {
+  'size': 5,
+  'query': {
+    'multi_match': {
+      'query': q,
+      'fields': ['title^2', 'director']
+    }
+  }
+}
+
+response = client.search(
+    body = query,
+    index = 'python-test-index'
+)
+
+print(response)
+#+end_src
+
+Respuesta: 
+
+#+begin_src 
+Traceback (most recent call last):
+... 
+/home/dapm/open-search/opse_env/lib/python3.6/site-packages/opensearchpy/connection/base.py", line 302, in _raise_error
+    status_code, error_message, additional_info
+opensearchpy.exceptions.NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index [python-test-index]', python-test-index, index_or_alias)
+#+end_src
+
+
+* python client ejemplos
+
+** Creating an index  
+
+To create an OpenSearch index, use the ~client.indices.create()~ method. You can use the following code to construct a JSON object with custom settings:
+
+
+#+begin_src python :eval no 
+index_name = 'python-test-index'
+index_body = {
+  'settings': {
+    'index': {
+      'number_of_shards': 4
+    }
+  }
+}
+response = client.indices.create(index_name, body=index_body)
+#+end_src
+
+script: create-index.py
+ 
+
+#+begin_src python
+from opensearchpy import OpenSearch
+
+host = 'localhost'
+port = 9200
+# For testing only. Don't store credentials in code.
+auth = ('admin', 'admin') 
+# Provide a CA bundle if you use intermediate CAs with your root CA.
+ca_certs_path = '/full/path/to/root-ca.pem' 
+
+# Create the client with SSL/TLS enabled, but hostname verification disabled.
+client = OpenSearch(
+    hosts = [{'host': host, 'port': port}],
+# enables gzip compression for request bodies
+    http_compress = True, 
+    http_auth = auth,
+    use_ssl = True,
+    verify_certs = True,
+    ssl_assert_hostname = False,
+    ssl_show_warn = False,
+    ca_certs = ca_certs_path
+)
+
+index_name = 'python-test-index'
+index_body = {
+  'settings': {
+    'index': {
+      'number_of_shards': 4
+    }
+  }
+}
+
+response = client.indices.create(index_name, body=index_body)
+
+#+end_src
+
+Después de ejecutar  el script: 
+
+#+begin_quote
+OpenSearch Plugins > Index Management > Indices
+#+end_quote
+
+
+
+[[file:images/opensearchPlugins-IndexManagement-Indices.png]]
+
+** Indexing a document
+
+You can index a document using the ~client.index()~ method:
+
+Ejemplo:
+
+#+begin_src  python
+document = {
+  'title': 'Moneyball',
+  'director': 'Bennett Miller',
+  'year': '2011'
+}
+
+response = client.index(
+    index = 'python-test-index',
+    body = document,
+    id = '1',
+    refresh = True
+)
+#+end_src
+
+
+Script:  indexing-a-document.py
+
+
+#+begin_src python
+from opensearchpy import OpenSearch
+
+host = 'localhost'
+port = 9200
+# For testing only. Don't store credentials in code.
+auth = ('admin', 'admin') 
+# Provide a CA bundle if you use intermediate CAs with your root CA.
+ca_certs_path = '/full/path/to/root-ca.pem' 
+
+# Create the client with SSL/TLS enabled, but hostname verification disabled.
+client = OpenSearch(
+    hosts = [{'host': host, 'port': port}],
+# enables gzip compression for request bodies
+    http_compress = True, 
+    http_auth = auth,
+    use_ssl = True,
+    verify_certs = True,
+    ssl_assert_hostname = False,
+    ssl_show_warn = False,
+    ca_certs = ca_certs_path
+)
+
+document = {
+  'title': 'Moneyball',
+  'director': 'Bennett Miller',
+  'year': '2011'
+}
+
+response = client.index(
+    index = 'python-test-index',
+    body = document,
+    id = '1',
+    refresh = True
+)
+
+print('\n Response')
+print(response)
+
+#+end_src
+
+Después de ejecutar  el script: 
+
+#+begin_src 
+ Response
+{'_index': 'python-test-index', '_id': '1', '_version': 2, 'result': 'updated', 'forced_refresh': True, '_shards': {'total': 2, 'successful': 2, 'failed': 0}, '_seq_no': 1, '_primary_term': 1}
+
+#+end_src
+
+
+#+begin_quote
+Management > Dev Tools 
+#+end_quote
+
+
+[[file:images/indexingADocument-devtools-query.png]]
+
+
+
+

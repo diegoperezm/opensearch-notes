@@ -313,3 +313,181 @@ Management > Dev Tools
 
 
 
+
+** Performing bulk operations
+
+You can perform several operations at the same time by using the ~bulk()~ method of the client.
+The operations may be of the same type or of different types. 
+Note that the operations must be separated by a \n and the entire string must be a single line:
+
+#+begin_src python
+
+movies = '{ "index" : { "_index" : "my-dsl-index", "_id" : "2" } } \n { "title" : "Interstellar", "director" : "Christopher Nolan", "year" : "2014"} \n { "create" : { "_index" : "my-dsl-index", "_id" : "3" } } \n { "title" : "Star Trek Beyond", "director" : "Justin Lin", "year" : "2015"} \n { "update" : {"_id" : "3", "_index" : "my-dsl-index" } } \n { "doc" : {"year" : "2016"} }'
+
+client.bulk(movies)
+
+#+end_src
+
+
+script: bulk-operations.py
+
+
+#+begin_src python
+from opensearchpy import OpenSearch
+
+host = 'localhost'
+port = 9200
+# For testing only. Don't store credentials in code.
+auth = ('admin', 'admin') 
+# Provide a CA bundle if you use intermediate CAs with your root CA.
+ca_certs_path = '/full/path/to/root-ca.pem' 
+
+# Create the client with SSL/TLS enabled, but hostname verification disabled.
+client = OpenSearch(
+    hosts = [{'host': host, 'port': port}],
+# enables gzip compression for request bodies
+    http_compress = True, 
+    http_auth = auth,
+    use_ssl = True,
+    verify_certs = True,
+    ssl_assert_hostname = False,
+    ssl_show_warn = False,
+    ca_certs = ca_certs_path
+)
+
+movies = '{ "index" : { "_index" : "my-dsl-index", "_id" : "2" } } \n { "title" : "Interstellar", "director" : "Christopher Nolan", "year" : "2014"} \n { "create" : { "_index" : "my-dsl-index", "_id" : "3" } } \n { "title" : "Star Trek Beyond", "director" : "Justin Lin", "year" : "2015"} \n { "update" : {"_id" : "3", "_index" : "my-dsl-index" } } \n { "doc" : {"year" : "2016"} }'
+
+client.bulk(movies)
+#+end_src
+
+Después de ejecutar el script:
+
+[[file:images/bulk-operations-py.png]]
+
+
+** Searching for documents
+
+The easiest way to search for documents is to construct a query string. The following code uses a multi-match query to search for “miller” in the title and director fields. It boosts the documents that have “miller” in the title field:
+
+#+begin_src python
+q = 'miller'
+query = {
+  'size': 5,
+  'query': {
+    'multi_match': {
+      'query': q,
+      'fields': ['title^2', 'director']
+    }
+  }
+}
+
+response = client.search(
+    body = query,
+    index = 'python-test-index'
+)
+#+end_src
+
+#+begin_src python
+from opensearchpy import OpenSearch
+
+host = 'localhost'
+port = 9200
+# For testing only. Don't store credentials in code.
+auth = ('admin', 'admin') 
+# Provide a CA bundle if you use intermediate CAs with your root CA.
+ca_certs_path = '/full/path/to/root-ca.pem' 
+
+# Create the client with SSL/TLS enabled, but hostname verification disabled.
+client = OpenSearch(
+    hosts = [{'host': host, 'port': port}],
+# enables gzip compression for request bodies
+    http_compress = True, 
+    http_auth = auth,
+    use_ssl = True,
+    verify_certs = True,
+    ssl_assert_hostname = False,
+    ssl_show_warn = False,
+    ca_certs = ca_certs_path
+)
+
+q = 'miller'
+query = {
+  'size': 5,
+  'query': {
+    'multi_match': {
+      'query': q,
+      'fields': ['title^2', 'director']
+    }
+  }
+}
+
+response = client.search(
+    body = query,
+    index = 'python-test-index'
+)
+
+
+#+end_src
+
+Después de ejecutar el script:
+
+#+begin_src 
+{'took': 84, 'timed_out': False, '_shards': {'total': 4, 'successful': 4, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': 0.2876821, 'hits': [{'_index': 'python-test-index', '_id': '1', '_score': 0.2876821, '_source': {'title': 'Moneyball', 'director': 'Bennett Miller', 'year': '2011'}}]}}
+#+end_src
+
+
+** Deleting a document
+
+You can delete a document using the ~client.delete()~ method:
+
+#+begin_src python
+response = client.delete(
+    index = 'python-test-index',
+    id = '1'
+)
+#+end_src
+
+
+Script: delete-doc.py
+
+#+begin_src python
+from opensearchpy import OpenSearch
+
+host = 'localhost'
+port = 9200
+# For testing only. Don't store credentials in code.
+auth = ('admin', 'admin') 
+# Provide a CA bundle if you use intermediate CAs with your root CA.
+ca_certs_path = '/full/path/to/root-ca.pem' 
+
+# Create the client with SSL/TLS enabled, but hostname verification disabled.
+client = OpenSearch(
+    hosts = [{'host': host, 'port': port}],
+# enables gzip compression for request bodies
+    http_compress = True, 
+    http_auth = auth,
+    use_ssl = True,
+    verify_certs = True,
+    ssl_assert_hostname = False,
+    ssl_show_warn = False,
+    ca_certs = ca_certs_path
+)
+
+response = client.delete(
+    index = 'python-test-index',
+    id = '1'
+)
+
+print('Response: \n')
+print(response)
+#+end_src
+
+Después de ejecutar el script:
+
+#+begin_src 
+Response
+{'_index': 'python-test-index', '_id': '1', '_version': 3, 'result': 'deleted', '_shards': {'total': 2, 'successful': 2, 'failed': 0}, '_seq_no': 2, '_primary_term': 3}
+#+end_src
+
+
+[[file:images/delete-doc-py.png]]

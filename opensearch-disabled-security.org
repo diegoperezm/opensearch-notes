@@ -1,0 +1,460 @@
+#+title:  opensearch-disabled-security
+#+OPTIONS: toc:nil   
+#+OPTIONS: html-postamble:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="org.css"/>
+#+OPTIONS: \n:t
+
+
+* docker-compose (DISABLE_SECURITY_PLUGIN=true)
+
+Ejemplo: docker-compose.yml
+
+#+begin_src 
+version: '3'
+services:
+  opensearch-node3:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch-node3
+    environment:
+# Name the cluster
+      - cluster.name=opensearch-cluster 
+# Name the node that will run in this container
+      - node.name=opensearch-node3 
+# Nodes to look for when discovering the cluster
+      - discovery.seed_hosts=opensearch-node3,opensearch-node4 
+# Nodes eligibile to serve as cluster manager
+      - cluster.initial_cluster_manager_nodes=opensearch-node3,opensearch-node4 
+ # Disable JVM heap memory swapping
+      - bootstrap.memory_lock=true
+# Set min and max JVM heap sizes to at least 50% of system RAM
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" 
+# Prevents execution of bundled demo script which installs demo certificates and security configurations to OpenSearch
+      - "DISABLE_INSTALL_DEMO_CONFIG=true" 
+# Disables Security plugin
+      - "DISABLE_SECURITY_PLUGIN=true" 
+    ulimits:
+      memlock:
+# Set memlock to unlimited (no soft or hard limit)
+        soft: -1 
+        hard: -1
+      nofile:
+# Maximum number of open files for the opensearch user - set to at least 65536
+        soft: 65536 
+        hard: 65536
+    volumes:
+# Creates volume called opensearch-data1 and mounts it to the container
+      - opensearch-data1:/usr/share/opensearch/data 
+    ports:
+# REST API
+      - 9200:9200 
+# Performance Analyzer
+      - 9600:9600 
+    networks:
+# All of the containers will join the same Docker bridge network
+      - opensearch-net 
+  opensearch-node4:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch-node4
+    environment:
+# Name the cluster
+      - cluster.name=opensearch-cluster 
+# Name the node that will run in this container
+      - node.name=opensearch-node4 
+# Nodes to look for when discovering the cluster
+      - discovery.seed_hosts=opensearch-node3,opensearch-node4 
+# Nodes eligibile to serve as cluster manager
+      - cluster.initial_cluster_manager_nodes=opensearch-node3,opensearch-node4 
+# Disable JVM heap memory swapping
+      - bootstrap.memory_lock=true 
+# Set min and max JVM heap sizes to at least 50% of system RAM
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" 
+# Prevents execution of bundled demo script which installs demo certificates and security configurations to OpenSearch
+      - "DISABLE_INSTALL_DEMO_CONFIG=true" 
+# Disables Security plugin
+      - "DISABLE_SECURITY_PLUGIN=true" 
+    ulimits:
+      memlock:
+# Set memlock to unlimited (no soft or hard limit)
+        soft: -1 
+        hard: -1
+      nofile:
+# Maximum number of open files for the opensearch user - set to at least 65536
+        soft: 65536 
+        hard: 65536
+    volumes:
+# Creates volume called opensearch-data2 and mounts it to the container
+      - opensearch-data2:/usr/share/opensearch/data 
+    networks:
+# All of the containers will join the same Docker bridge network
+      - opensearch-net 
+  opensearch-dashboards0:
+    image: opensearchproject/opensearch-dashboards:latest
+    container_name: opensearch-dashboards0
+    ports:
+# Map host port 5601 to container port 5601
+      - 5601:5601 
+    expose:
+ # Expose port 5601 for web access to OpenSearch Dashboards
+      - "5601"
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://opensearch-node3:9200","http://opensearch-node4:9200"]'
+# disables security dashboards plugin in OpenSearch Dashboards
+      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true" 
+    networks:
+      - opensearch-net
+
+volumes:
+  opensearch-data1:
+  opensearch-data2:
+
+networks:
+  opensearch-net:
+
+#+end_src
+
+
+* logstash 
+
+https://opensearch.org/docs/latest/tools/logstash/index
+
+Logstash is a real-time event processing engine.
+
+Structure of a pipeline
+
+The way that Logstash works is that you configure a pipeline that has three phases:
+ - inputs
+ - filters
+ - outputs
+
+Each phase uses one or more plugins. Logstash has over 200 built-in plugins so chances are that you’ll find what you need. Apart from the built-in plugins, you can use plugins from the community or even write your own.
+
+The structure of a pipeline is as follows:
+
+#+begin_src 
+input {
+  input_plugin => {}
+}
+
+filter {
+  filter_plugin => {}
+}
+
+output {
+  output_plugin => {}
+}
+#+end_src
+
+where:
+
+ - input 
+   receives events like logs from multiple sources simultaneously.
+    Logstash supports a number of input plugins for TCP/UDP, files, syslog, Microsoft Windows EventLogs, stdin, HTTP, and so on. You can also use an open source collection of input tools called Beats to gather events.
+ The input plugin sends the events to a filter.
+
+ - filter 
+  parses and enriches the events in one way or the other.
+   Logstash has a large collection of filter plugins that modify events and pass them on to an output. For example, a grok filter parses unstructured events into fields and a mutate filter changes fields. Filters are executed sequentially.
+
+ - output 
+  ships the filtered events to one or more destinations.
+  Logstash supports a wide range of output plugins for destinations like OpenSearch, TCP/UDP, emails, files, stdout, HTTP, Nagios, and so on.
+
+Both the input and output phases support:
+ -  codecs to process events as they enter or exit the pipeline.
+
+ Some of the popular codecs are json and multiline. The json codec processes data that’s in JSON format and the multiline codec merges multiple line events into a single line.
+
+You can also write conditional statements within pipeline configurations to perform certain actions, if a certain criteria is met.
+
+**  logstash (docker-compose.yml)  
+
+Página de referencia:
+
+https://github.com/shazforiot/Elasticsearch-logstash-Kibana-Docker-Compose/blob/main/docker-compose.yml
+
+Archivo original (referencia)
+
+#+begin_src sh 
+version: '3.6'
+services:
+  Elasticsearch:
+    image: elasticsearch:7.16.2
+    container_name: elasticsearch
+    restart: always
+    volumes:
+    - elastic_data:/usr/share/elasticsearch/data/
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      discovery.type: single-node    
+    ports:
+    - '9200:9200'
+    - '9300:9300'
+    networks:
+      - elk
+
+  Logstash:
+    image: logstash:7.16.2
+    container_name: logstash
+    restart: always
+    volumes:
+    - ./logstash/:/logstash_dir
+    command: logstash -f /logstash_dir/logstash.conf 
+    depends_on:
+      - Elasticsearch
+    ports:
+    - '9600:9600'
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"    
+    networks:
+      - elk
+
+  Kibana:
+    image: kibana:7.16.2
+    container_name: kibana
+    restart: always       
+    ports:
+    - '5601:5601'
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200  
+    depends_on:
+      - Elasticsearch  
+    networks:
+      - elk
+volumes:
+  elastic_data: {}
+
+networks:
+  elk:
+
+#+end_src
+
+
+**  OpenSearch, OpenSearch-dashboards y logstash (docker-compose.yml) 
+
+Es necesario crear una carpeta con el nombre de "logstash" en el mismo directorio en que se encuentra el archivo "docker-compose.yml", en la carpeta "logstash" se creará el archivo "logstash.conf"
+
+
+Cambios al archivo de original/referencia : 
+
+| original/referencia    | docker-compose.yml                                |
+|------------------------+---------------------------------------------------|
+| image: logstash:7.16.2 | logstash-oss-with-opensearch-output-plugin:latest |
+|------------------------+---------------------------------------------------|
+| depends_on:            | depends_on:                                       |
+| - Elasticsearch        | - opensearch-node3                                |
+|------------------------+---------------------------------------------------|
+| networks:              | networks:                                         |
+| - elk                  | - opensearch-net                                  |
+  
+
+Servicio Logstash:
+
+#+begin_src 
+  Logstash:
+    image: opensearchproject/logstash-oss-with-opensearch-output-plugin:latest
+    container_name: logstash
+    restart: always
+    volumes:
+    - ./logstash/:/logstash_dir
+    command: logstash -f /logstash_dir/logstash.conf 
+    depends_on:
+      - opensearch-node3
+    ports:
+    - '9600:9600'
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"    
+    networks:
+      - opensearch-net
+#+end_src
+
+
+Archivo logstash.conf:
+
+    hosts => "http://opensearch-node3:9200" // no usar "localhost:9200", logstash no puede encontrar el host
+
+
+#+begin_src 
+input { stdin {} }
+
+output {
+  opensearch {
+    hosts => "http://opensearch-node3:9200"
+    index => "op-logstash-docker"
+  }
+}
+
+#+end_src
+
+
+Cambios al archivo docker-compose.yml, ahora logstash está usando el puerto 9600: 
+
+#+begin_src 
+ ports:
+      - 9200:9200 
+        # - 9600:9600 
+#+end_src
+
+
+Archivo docker-compose.yml
+
+#+begin_src 
+version: '3'
+services:
+  opensearch-node3:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch-node3
+    environment:
+      - cluster.name=opensearch-cluster 
+      - node.name=opensearch-node3 
+      - discovery.seed_hosts=opensearch-node3,opensearch-node4 
+      - cluster.initial_cluster_manager_nodes=opensearch-node3,opensearch-node4 
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" 
+      - "DISABLE_INSTALL_DEMO_CONFIG=true" 
+      - "DISABLE_SECURITY_PLUGIN=true" 
+    ulimits:
+      memlock:
+        soft: -1 
+        hard: -1
+      nofile:
+        soft: 65536 
+        hard: 65536
+    volumes:
+      - opensearch-data1:/usr/share/opensearch/data 
+    ports:
+      - 9200:9200 
+        # - 9600:9600 
+    networks:
+      - opensearch-net 
+  opensearch-node4:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch-node4
+    environment:
+      - cluster.name=opensearch-cluster 
+      - node.name=opensearch-node4 
+      - discovery.seed_hosts=opensearch-node3,opensearch-node4 
+      - cluster.initial_cluster_manager_nodes=opensearch-node3,opensearch-node4 
+      - bootstrap.memory_lock=true 
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" 
+      - "DISABLE_INSTALL_DEMO_CONFIG=true" 
+      - "DISABLE_SECURITY_PLUGIN=true" 
+    ulimits:
+      memlock:
+        soft: -1 
+        hard: -1
+      nofile:
+        soft: 65536 
+        hard: 65536
+    volumes:
+      - opensearch-data2:/usr/share/opensearch/data 
+    networks:
+      - opensearch-net 
+  opensearch-dashboards0:
+    image: opensearchproject/opensearch-dashboards:latest
+    container_name: opensearch-dashboards0
+    ports:
+      - 5601:5601 
+    expose:
+      - "5601"
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://opensearch-node3:9200","http://opensearch-node4:9200"]'
+      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true" 
+    networks:
+      - opensearch-net
+  Logstash:
+    image: opensearchproject/logstash-oss-with-opensearch-output-plugin:latest
+    container_name: logstash
+    restart: always
+    volumes:
+    - ./logstash/:/logstash_dir
+    command: logstash -f /logstash_dir/logstash.conf 
+    depends_on:
+      - opensearch-node3
+    ports:
+    - '9600:9600'
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"    
+    networks:
+      - opensearch-net
+
+volumes:
+  opensearch-data1:
+  opensearch-data2:
+
+networks:
+  opensearch-net:
+#+end_src
+
+Resultado:
+no he podido crear un index:
+
+#+begin_src 
+$ docker logs logstash 
+
+Using bundled JDK: /usr/share/logstash/jdk
+Sending Logstash logs to /usr/share/logstash/logs which is now configured via log4j2.properties
+[2023-07-02T17:30:04,005][INFO ][logstash.runner          ] Log4j configuration path used is: /usr/share/logstash/config/log4j2.properties
+[2023-07-02T17:30:04,014][INFO ][logstash.runner          ] Starting Logstash {"logstash.version"=>"8.6.1", "jruby.version"=>"jruby 9.3.8.0 (2.6.8) 2022-09-13 98d69c9461 OpenJDK 64-Bit Server VM 17.0.5+8 on 17.0.5+8 +indy +jit [x86_64-linux]"}
+[2023-07-02T17:30:04,019][INFO ][logstash.runner          ] JVM bootstrap flags: [-Xms1g, -Xmx1g, -Djava.awt.headless=true, -Dfile.encoding=UTF-8, -Djruby.compile.invokedynamic=true, -XX:+HeapDumpOnOutOfMemoryError, -Djava.security.egd=file:/dev/urandom, -Dlog4j2.isThreadContextMapInheritable=true, -Dls.cgroup.cpuacct.path.override=/, -Dls.cgroup.cpu.path.override=/, -Xmx256m, -Xms256m, -Djruby.regexp.interruptible=true, -Djdk.io.File.enableADS=true, --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED, --add-opens=java.base/java.security=ALL-UNNAMED, --add-opens=java.base/java.io=ALL-UNNAMED, --add-opens=java.base/java.nio.channels=ALL-UNNAMED, --add-opens=java.base/sun.nio.ch=ALL-UNNAMED, --add-opens=java.management/sun.management=ALL-UNNAMED]
+[2023-07-02T17:30:04,038][INFO ][logstash.settings        ] Creating directory {:setting=>"path.queue", :path=>"/usr/share/logstash/data/queue"}
+[2023-07-02T17:30:04,047][INFO ][logstash.settings        ] Creating directory {:setting=>"path.dead_letter_queue", :path=>"/usr/share/logstash/data/dead_letter_queue"}
+[2023-07-02T17:30:04,453][WARN ][logstash.config.source.multilocal] Ignoring the 'pipelines.yml' file because modules or command line options are specified
+[2023-07-02T17:30:04,472][INFO ][logstash.agent           ] No persistent UUID file found. Generating new UUID {:uuid=>"c3fad60b-7215-4575-aae3-f0a134fd99a0", :path=>"/usr/share/logstash/data/uuid"}
+[2023-07-02T17:30:04,965][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=>9600, :ssl_enabled=>false}
+[2023-07-02T17:30:05,332][INFO ][org.reflections.Reflections] Reflections took 175 ms to scan 1 urls, producing 127 keys and 444 values
+[2023-07-02T17:30:09,218][INFO ][logstash.javapipeline    ] Pipeline `main` is configured with `pipeline.ecs_compatibility: v8` setting. All plugins in this pipeline will default to `ecs_compatibility => v8` unless explicitly configured otherwise.
+[2023-07-02T17:30:09,235][INFO ][logstash.outputs.opensearch][main] New OpenSearch output {:class=>"LogStash::Outputs::OpenSearch", :hosts=>["http://opensearch-node3:9200"]}
+[2023-07-02T17:30:09,421][INFO ][logstash.outputs.opensearch][main] OpenSearch pool URLs updated {:changes=>{:removed=>[], :added=>[http://opensearch-node3:9200/]}}
+[2023-07-02T17:30:09,595][WARN ][logstash.outputs.opensearch][main] Restored connection to OpenSearch instance {:url=>"http://opensearch-node3:9200/"}
+[2023-07-02T17:30:09,681][INFO ][logstash.outputs.opensearch][main] Cluster version determined (2.8.0) {:version=>2}
+[2023-07-02T17:30:09,709][INFO ][logstash.javapipeline    ][main] Starting pipeline {:pipeline_id=>"main", "pipeline.workers"=>4, "pipeline.batch.size"=>125, "pipeline.batch.delay"=>50, "pipeline.max_inflight"=>500, "pipeline.sources"=>["/logstash_dir/logstash.conf"], :thread=>"#<Thread:0x45f13fb9@/usr/share/logstash/logstash-core/lib/logstash/java_pipeline.rb:131 run>"}
+[2023-07-02T17:30:09,712][INFO ][logstash.outputs.opensearch][main] Using a default mapping template {:version=>2, :ecs_compatibility=>:v8}
+[2023-07-02T17:30:11,377][INFO ][logstash.javapipeline    ][main] Pipeline Java execution initialization time {"seconds"=>1.67}
+[2023-07-02T17:30:11,594][INFO ][logstash.javapipeline    ][main] Pipeline started {"pipeline.id"=>"main"}
+[2023-07-02T17:30:11,671][INFO ][logstash.agent           ] Pipelines running {:count=>1, :running_pipelines=>[:main], :non_running_pipelines=>[]}
+[2023-07-02T17:30:12,702][INFO ][logstash.javapipeline    ][main] Pipeline terminated {"pipeline.id"=>"main"}
+[2023-07-02T17:30:13,187][INFO ][logstash.pipelinesregistry] Removed pipeline from registry successfully {:pipeline_id=>:main}
+[2023-07-02T17:30:13,196][INFO ][logstash.runner          ] Logstash shut down.
+Using bundled JDK: /usr/share/logstash/jdk
+Sending Logstash logs to /usr/share/logstash/logs which is now configured via log4j2.properties
+[2023-07-02T17:31:12,495][INFO ][logstash.runner          ] Log4j configuration path used is: /usr/share/logstash/config/log4j2.properties
+[2023-07-02T17:31:12,508][INFO ][logstash.runner          ] Starting Logstash {"logstash.version"=>"8.6.1", "jruby.version"=>"jruby 9.3.8.0 (2.6.8) 2022-09-13 98d69c9461 OpenJDK 64-Bit Server VM 17.0.5+8 on 17.0.5+8 +indy +jit [x86_64-linux]"}
+[2023-07-02T17:31:12,514][INFO ][logstash.runner          ] JVM bootstrap flags: [-Xms1g, -Xmx1g, -Djava.awt.headless=true, -Dfile.encoding=UTF-8, -Djruby.compile.invokedynamic=true, -XX:+HeapDumpOnOutOfMemoryError, -Djava.security.egd=file:/dev/urandom, -Dlog4j2.isThreadContextMapInheritable=true, -Dls.cgroup.cpuacct.path.override=/, -Dls.cgroup.cpu.path.override=/, -Xmx256m, -Xms256m, -Djruby.regexp.interruptible=true, -Djdk.io.File.enableADS=true, --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED, --add-opens=java.base/java.security=ALL-UNNAMED, --add-opens=java.base/java.io=ALL-UNNAMED, --add-opens=java.base/java.nio.channels=ALL-UNNAMED, --add-opens=java.base/sun.nio.ch=ALL-UNNAMED, --add-opens=java.management/sun.management=ALL-UNNAMED]
+[2023-07-02T17:31:12,902][WARN ][logstash.config.source.multilocal] Ignoring the 'pipelines.yml' file because modules or command line options are specified
+[2023-07-02T17:31:13,667][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=>9600, :ssl_enabled=>false}
+[2023-07-02T17:31:15,113][INFO ][org.reflections.Reflections] Reflections took 550 ms to scan 1 urls, producing 127 keys and 444 values
+[2023-07-02T17:31:19,275][INFO ][logstash.javapipeline    ] Pipeline `main` is configured with `pipeline.ecs_compatibility: v8` setting. All plugins in this pipeline will default to `ecs_compatibility => v8` unless explicitly configured otherwise.
+[2023-07-02T17:31:19,294][INFO ][logstash.outputs.opensearch][main] New OpenSearch output {:class=>"LogStash::Outputs::OpenSearch", :hosts=>["http://opensearch-node3:9200"]}
+[2023-07-02T17:31:19,601][INFO ][logstash.outputs.opensearch][main] OpenSearch pool URLs updated {:changes=>{:removed=>[], :added=>[http://opensearch-node3:9200/]}}
+[2023-07-02T17:31:19,678][WARN ][logstash.outputs.opensearch][main] Restored connection to OpenSearch instance {:url=>"http://opensearch-node3:9200/"}
+[2023-07-02T17:31:19,735][INFO ][logstash.outputs.opensearch][main] Cluster version determined (2.8.0) {:version=>2}
+[2023-07-02T17:31:19,795][INFO ][logstash.outputs.opensearch][main] Using a default mapping template {:version=>2, :ecs_compatibility=>:v8}
+[2023-07-02T17:31:19,802][INFO ][logstash.javapipeline    ][main] Starting pipeline {:pipeline_id=>"main", "pipeline.workers"=>4, "pipeline.batch.size"=>125, "pipeline.batch.delay"=>50, "pipeline.max_inflight"=>500, "pipeline.sources"=>["/logstash_dir/logstash.conf"], :thread=>"#<Thread:0x2fc0338e@/usr/share/logstash/logstash-core/lib/logstash/java_pipeline.rb:131 run>"}
+[2023-07-02T17:31:22,408][INFO ][logstash.javapipeline    ][main] Pipeline Java execution initialization time {"seconds"=>2.6}
+[2023-07-02T17:31:22,568][INFO ][logstash.javapipeline    ][main] Pipeline started {"pipeline.id"=>"main"}
+[2023-07-02T17:31:22,609][INFO ][logstash.agent           ] Pipelines running {:count=>1, :running_pipelines=>[:main], :non_running_pipelines=>[]}
+[2023-07-02T17:31:22,750][INFO ][logstash.javapipeline    ][main] Pipeline terminated {"pipeline.id"=>"main"}
+[2023-07-02T17:31:23,139][INFO ][logstash.pipelinesregistry] Removed pipeline from registry successfully {:pipeline_id=>:main}
+[2023-07-02T17:31:23,181][INFO ][logstash.runner          ] Logstash shut down.
+Using bundled JDK: /usr/share/logstash/jdk
+Sending Logstash logs to /usr/share/logstash/logs which is now configured via log4j2.properties
+[2023-07-02T17:32:20,227][INFO ][logstash.runner          ] Log4j configuration path used is: /usr/share/logstash/config/log4j2.properties
+[2023-07-02T17:32:20,239][INFO ][logstash.runner          ] Starting Logstash {"logstash.version"=>"8.6.1", "jruby.version"=>"jruby 9.3.8.0 (2.6.8) 2022-09-13 98d69c9461 OpenJDK 64-Bit Server VM 17.0.5+8 on 17.0.5+8 +indy +jit [x86_64-linux]"}
+[2023-07-02T17:32:20,247][INFO ][logstash.runner          ] JVM bootstrap flags: [-Xms1g, -Xmx1g, -Djava.awt.headless=true, -Dfile.encoding=UTF-8, -Djruby.compile.invokedynamic=true, -XX:+HeapDumpOnOutOfMemoryError, -Djava.security.egd=file:/dev/urandom, -Dlog4j2.isThreadContextMapInheritable=true, -Dls.cgroup.cpuacct.path.override=/, -Dls.cgroup.cpu.path.override=/, -Xmx256m, -Xms256m, -Djruby.regexp.interruptible=true, -Djdk.io.File.enableADS=true, --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED, --add-opens=java.base/java.security=ALL-UNNAMED, --add-opens=java.base/java.io=ALL-UNNAMED, --add-opens=java.base/java.nio.channels=ALL-UNNAMED, --add-opens=java.base/sun.nio.ch=ALL-UNNAMED, --add-opens=java.management/sun.management=ALL-UNNAMED]
+[2023-07-02T17:32:20,778][WARN ][logstash.config.source.multilocal] Ignoring the 'pipelines.yml' file because modules or command line options are specified
+[2023-07-02T17:32:22,277][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=>9600, :ssl_enabled=>false}
+[2023-07-02T17:32:23,048][INFO ][org.reflections.Reflections] Reflections took 200 ms to scan 1 urls, producing 127 keys and 444 values
+[2023-07-02T17:32:26,609][INFO ][logstash.javapipeline    ] Pipeline `main` is configured with `pipeline.ecs_compatibility: v8` setting. All plugins in this pipeline will default to `ecs_compatibility => v8` unless explicitly configured otherwise.
+[2023-07-02T17:32:26,635][INFO ][logstash.outputs.opensearch][main] New OpenSearch output {:class=>"LogStash::Outputs::OpenSearch", :hosts=>["http://opensearch-node3:9200"]}
+[2023-07-02T17:32:26,924][INFO ][logstash.outputs.opensearch][main] OpenSearch pool URLs updated {:changes=>{:removed=>[], :added=>[http://opensearch-node3:9200/]}}
+[2023-07-02T17:32:27,023][WARN ][logstash.outputs.opensearch][main] Restored connection to OpenSearch instance {:url=>"http://opensearch-node3:9200/"}
+
+#+end_src
+
+
+
+* Misc
+
+https://forum.opensearch.org/t/logstash-with-opensearch-docker-container/10006
+
+

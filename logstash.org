@@ -1,0 +1,371 @@
+#+title:  logstash  
+#+OPTIONS: toc:nil   
+#+OPTIONS: html-postamble:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="org.css"/>
+#+OPTIONS: \n:t
+
+
+
+* docker-compose.yml
+
+#+begin_src 
+    ports:
+      - 9200:9200
+      - 9300:9300 # diferente 
+        # - 9600:9600 
+#+end_src
+
+
+
+#+begin_src 
+version: '3'
+services:
+  opensearch-node3:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch-node3
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node3
+      - discovery.seed_hosts=opensearch-node3,opensearch-node4
+      - cluster.initial_cluster_manager_nodes=opensearch-node3,opensearch-node4
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+      - "DISABLE_SECURITY_PLUGIN=true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data1:/usr/share/opensearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+        # - 9600:9600 
+    networks:
+      - opensearch-net
+  opensearch-node4:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch-node4
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node4
+      - discovery.seed_hosts=opensearch-node3,opensearch-node4
+      - cluster.initial_cluster_manager_nodes=opensearch-node3,opensearch-node4
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+      - "DISABLE_SECURITY_PLUGIN=true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data2:/usr/share/opensearch/data
+    networks:
+      - opensearch-net
+  opensearch-dashboards0:
+    image: opensearchproject/opensearch-dashboards:latest
+    container_name: opensearch-dashboards0
+    ports:
+      - 5601:5601
+    expose:
+      - "5601"
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://opensearch-node3:9200","http://opensearch-node4:9200"]'
+      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true"
+    networks:
+      - opensearch-net
+volumes:
+  opensearch-data1:
+  opensearch-data2:
+
+networks:
+  opensearch-net:
+
+
+#+end_src
+
+
+
+* logstash-input-opensearch-plugin-for-opensearch
+
+https://opensearch.org/downloads.html
+
+Descargar logstash-oss-with-opensearch-output-plugin-8.6.1 (linux-x64):
+
+#+begin_src 
+wget https://artifacts.opensearch.org/logstash/logstash-oss-with-opensearch-output-plugin-8.6.1-linux-x64.tar.gz
+#+end_src
+
+
+Descomprimir:
+
+#+begin_src 
+tar -zxvf https://artifacts.opensearch.org/logstash/logstash-oss-with-opensearch-output-plugin-8.6.1-linux-x64.tar.gz
+#+end_src
+
+
+Archivo logstash.conf :
+
+Referencia https://github.com/opensearch-project/logstash-output-opensearch
+
+#+begin_src 
+input {
+  stdin {}
+}
+
+output {
+  opensearch {
+    hosts => "localhost:9200"
+    index => "opensearch-logstash-logs-%{+YYYY.MM.dd}"
+  }
+}
+#+end_src
+
+Ejecutar logstash utilizando un el logstash.conf:
+
+#+begin_src 
+./logstash-8.6.1/bin/logstash -f /path/to/folder/logstash.conf 
+#+end_src
+
+Resultado:
+
+#+begin_src 
+[2023-07-03T19:32:18,717][INFO ][logstash.runner          ] Log4j configuration path used is: /home/dapm/opensearch-logstash/logstash-8.6.1/config/log4j2.properties
+[2023-07-03T19:32:18,741][INFO ][logstash.runner          ] Starting Logstash {"logstash.version"=>"8.6.1", "jruby.version"=>"jruby 9.3.8.0 (2.6.8) 2022-09-13 98d69c9461 OpenJDK 64-Bit Server VM 17.0.5+8 on 17.0.5+8 +indy +jit [x86_64-linux]"}
+[2023-07-03T19:32:18,754][INFO ][logstash.runner          ] JVM bootstrap flags: [-Xms1g, -Xmx1g, -Djava.awt.headless=true, -Dfile.encoding=UTF-8, -Djruby.compile.invokedynamic=true, -XX:+HeapDumpOnOutOfMemoryError, -Djava.security.egd=file:/dev/urandom, -Dlog4j2.isThreadContextMapInheritable=true, -Djruby.regexp.interruptible=true, -Djdk.io.File.enableADS=true, --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED, --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED, --add-opens=java.base/java.security=ALL-UNNAMED, --add-opens=java.base/java.io=ALL-UNNAMED, --add-opens=java.base/java.nio.channels=ALL-UNNAMED, --add-opens=java.base/sun.nio.ch=ALL-UNNAMED, --add-opens=java.management/sun.management=ALL-UNNAMED]
+[2023-07-03T19:32:19,967][WARN ][logstash.config.source.multilocal] Ignoring the 'pipelines.yml' file because modules or command line options are specified
+[2023-07-03T19:32:22,290][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=>9600, :ssl_enabled=>false}
+[2023-07-03T19:32:23,988][INFO ][org.reflections.Reflections] Reflections took 765 ms to scan 1 urls, producing 127 keys and 444 values
+[2023-07-03T19:32:32,796][INFO ][logstash.javapipeline    ] Pipeline `main` is configured with `pipeline.ecs_compatibility: v8` setting. All plugins in this pipeline will default to `ecs_compatibility => v8` unless explicitly configured otherwise.
+[2023-07-03T19:32:32,922][INFO ][logstash.outputs.opensearch][main] New OpenSearch output {:class=>"LogStash::Outputs::OpenSearch", :hosts=>["//localhost:9200"]}
+[2023-07-03T19:32:33,584][INFO ][logstash.outputs.opensearch][main] OpenSearch pool URLs updated {:changes=>{:removed=>[], :added=>[http://localhost:9200/]}}
+[2023-07-03T19:32:33,819][WARN ][logstash.outputs.opensearch][main] Restored connection to OpenSearch instance {:url=>"http://localhost:9200/"}
+[2023-07-03T19:32:33,961][INFO ][logstash.outputs.opensearch][main] Cluster version determined (2.8.0) {:version=>2}
+[2023-07-03T19:32:34,046][INFO ][logstash.outputs.opensearch][main] Using a default mapping template {:version=>2, :ecs_compatibility=>:v8}
+[2023-07-03T19:32:34,173][INFO ][logstash.javapipeline    ][main] Starting pipeline {:pipeline_id=>"main", "pipeline.workers"=>2, "pipeline.batch.size"=>125, "pipeline.batch.delay"=>50, "pipeline.max_inflight"=>250, "pipeline.sources"=>["/home/dapm/opensearch-logstash/logstash.conf"], :thread=>"#<Thread:0x23756828@/home/dapm/opensearch-logstash/logstash-8.6.1/logstash-core/lib/logstash/java_pipeline.rb:131 run>"}
+[2023-07-03T19:32:37,995][INFO ][logstash.javapipeline    ][main] Pipeline Java execution initialization time {"seconds"=>3.82}
+[2023-07-03T19:32:38,159][INFO ][logstash.javapipeline    ][main] Pipeline started {"pipeline.id"=>"main"}
+The stdin plugin is now waiting for input:
+[2023-07-03T19:32:38,245][INFO ][logstash.agent           ] Pipelines running {:count=>1, :running_pipelines=>[:main], :non_running_pipelines=>[]}
+
+#+end_src
+
+
+stdin :
+
+#+begin_src 
+[2023-07-03T19:32:38,159][INFO ][logstash.javapipeline    ][main] Pipeline started {"pipeline.id"=>"main"}
+The stdin plugin is now waiting for input:
+
+#+end_src
+
+Input:
+Referencia: https://www.elastic.co/guide/en/logstash/current/config-examples.html
+
+#+begin_src 
+127.0.0.1 - - [11/Dec/2013:00:01:45 -0800] "GET /xampp/status.php HTTP/1.1" 200 3891 "http://cadenza/xampp/navi.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:25.0) Gecko/20100101 Firefox/25.0"
+#+end_src
+
+Resultado:
+
+#+begin_src 
+The stdin plugin is now waiting for input:
+[2023-07-03T19:32:38,245][INFO ][logstash.agent           ] Pipelines running {:count=>1, :running_pipelines=>[:main], :non_running_pipelines=>[]}
+
+127.0.0.1 - - [11/Dec/2013:00:01:45 -0800] "GET /xampp/status.php HTTP/1.1" 200 3891 "http://cadenza/xampp/navi.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:25.0) Gecko/20100101 Firefox/25.0"
+#+end_src
+
+
+Consulta:
+
+#+begin_src 
+curl 'localhost:9200/opensearch-logstash-logs-2023.07.03/_search?pretty' 
+#+end_src
+
+
+Respuesta:
+
+#+begin_src 
+{
+  "took" : 18,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 1,
+    "successful" : 1,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : {
+      "value" : 6,
+      "relation" : "eq"
+    },
+    "max_score" : 1.0,
+    "hits" : [
+      {
+        "_index" : "opensearch-logstash-logs-2023.07.03",
+        "_id" : "zcHMHYkBBqhNT_J2D4ai",
+        "_score" : 1.0,
+        "_source" : {
+          "@timestamp" : "2023-07-03T22:07:38.887891258Z",
+          "message" : "",
+          "@version" : "1",
+          "event" : {
+            "original" : ""
+          },
+          "host" : {
+            "hostname" : "dapm-Lenovo-G405"
+          }
+        }
+      },
+      {
+        "_index" : "opensearch-logstash-logs-2023.07.03",
+        "_id" : "zsHMHYkBBqhNT_J2D4ai",
+        "_score" : 1.0,
+        "_source" : {
+          "@timestamp" : "2023-07-03T22:07:38.895876350Z",
+          "message" : "",
+          "@version" : "1",
+          "event" : {
+            "original" : ""
+          },
+          "host" : {
+            "hostname" : "dapm-Lenovo-G405"
+          }
+        }
+      },
+      {
+        "_index" : "opensearch-logstash-logs-2023.07.03",
+        "_id" : "y8HMHYkBBqhNT_J2DoYs",
+        "_score" : 1.0,
+        "_source" : {
+          "@timestamp" : "2023-07-03T22:07:38.871690357Z",
+          "message" : "",
+          "@version" : "1",
+          "event" : {
+            "original" : ""
+          },
+          "host" : {
+            "hostname" : "dapm-Lenovo-G405"
+          }
+        }
+      },
+      {
+        "_index" : "opensearch-logstash-logs-2023.07.03",
+        "_id" : "zMHMHYkBBqhNT_J2DoYs",
+        "_score" : 1.0,
+        "_source" : {
+          "@timestamp" : "2023-07-03T22:07:38.890654125Z",
+          "message" : "127.0.0.1 - - [11/Dec/2013:00:01:45 -0800] \"GET /xampp/status.php HTTP/1.1\" 200 3891 \"http://cadenza/xampp/navi.php\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:25.0) Gecko/20100101 Firefox/25.0\"",
+          "@version" : "1",
+          "event" : {
+            "original" : "127.0.0.1 - - [11/Dec/2013:00:01:45 -0800] \"GET /xampp/status.php HTTP/1.1\" 200 3891 \"http://cadenza/xampp/navi.php\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:25.0) Gecko/20100101 Firefox/25.0\""
+          },
+          "host" : {
+            "hostname" : "dapm-Lenovo-G405"
+          }
+        }
+      },
+      {
+        "_index" : "opensearch-logstash-logs-2023.07.03",
+        "_id" : "z8EdHokBBqhNT_J2C4Y3",
+        "_score" : 1.0,
+        "_source" : {
+          "@timestamp" : "2023-07-03T23:36:06.940850441Z",
+          "message" : "127.0.0.1 - - [11/Dec/2013:00:01:45 -0800] \"GET /xampp/status.php HTTP/1.1\" 200 3891 \"http://cadenza/xampp/navi.php\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:25.0) Gecko/20100101 Firefox/25.0\"",
+          "@version" : "1",
+          "event" : {
+            "original" : "127.0.0.1 - - [11/Dec/2013:00:01:45 -0800] \"GET /xampp/status.php HTTP/1.1\" 200 3891 \"http://cadenza/xampp/navi.php\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:25.0) Gecko/20100101 Firefox/25.0\""
+          },
+          "host" : {
+            "hostname" : "dapm-Lenovo-G405"
+          }
+        }
+      },
+      {
+        "_index" : "opensearch-logstash-logs-2023.07.03",
+        "_id" : "0MEdHokBBqhNT_J2I4ZN",
+        "_score" : 1.0,
+        "_source" : {
+          "@timestamp" : "2023-07-03T23:36:13.253383630Z",
+          "message" : "",
+          "@version" : "1",
+          "event" : {
+            "original" : ""
+          },
+          "host" : {
+            "hostname" : "dapm-Lenovo-G405"
+          }
+        }
+      }
+    ]
+  }
+}
+
+#+end_src
+
+
+
+Consulta:
+
+#+begin_src 
+curl 'localhost:9200/opensearch-logstash-logs-2023.07.03/_count?pretty' 
+#+end_src
+
+
+Respuesta: 
+
+
+#+begin_src 
+{
+  "count" : 6,
+  "_shards" : {
+    "total" : 1,
+    "successful" : 1,
+    "skipped" : 0,
+    "failed" : 0
+  }
+}
+#+end_src
+
+
+* Logstash (no funciona no reconoce el plugin opensearch) 
+
+** installing Logstash (apt, no funciona no reconoce el plugin opensearch)
+
+https://www.elastic.co/guide/en/logstash/8.8/installing-logstash.html#_apt
+
+- Download and install the Public Signing Key:
+
+#+begin_src 
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
+#+end_src
+
+
+- Save the repository definition to /etc/apt/sources.list.d/elastic-8.x.list:
+
+#+begin_src 
+echo "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+#+end_src
+
+- Run sudo apt-get update and the repository is ready for use. You can install it with:
+
+#+begin_src 
+sudo apt-get update && sudo apt-get install logstash
+#+end_src
+
+** Running Logstash by using Systemd
+
+https://www.elastic.co/guide/en/logstash/8.8/running-logstash.html
+
+#+begin_src 
+sudo systemctl start logstash.service
+#+end_src
